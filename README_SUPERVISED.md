@@ -1,3 +1,5 @@
+**Autores:** Luciana Hoyos Pérez y Santiago Manco Maya
+
 # Modelos Supervisados
 
 Este módulo implementa cuatro algoritmos de aprendizaje supervisado aplicados a un dataset en común, permitiendo comparar su rendimiento mediante métricas y visualizaciones.
