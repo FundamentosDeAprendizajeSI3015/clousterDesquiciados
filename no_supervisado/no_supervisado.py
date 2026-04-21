@@ -1,6 +1,6 @@
 # =============================================================================
 # MÓDULO: Análisis No Supervisado
-# Autores: Mariana Valderrama, Alejandra Ocampo, Camila Martínez
+# Autores: Camila Martínez, Alejandra Ocampo, Camila Martínez
 # =============================================================================
 
 import os
