@@ -28,5 +28,7 @@ En este repositorio se desarrollan los siguientes procesos:
 -  **Transformación de datos**
   - Creación de nuevas variables
   - Filtrado de información relevante
+
+    ##  Autores: Alexandra Hurtado y Mariana Valderrama
   - Ajustes necesarios según el contexto del dataset
 
