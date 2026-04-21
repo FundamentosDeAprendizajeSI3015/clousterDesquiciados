@@ -52,5 +52,3 @@ pip install pandas numpy matplotlib seaborn scikit-learn umap-learn scipy
 cd Desarrollo
 python pipeline.py
 ```
-
-Para más detalles sobre cada etapa, consulta el [README de Desarrollo](Desarrollo/README.md).
