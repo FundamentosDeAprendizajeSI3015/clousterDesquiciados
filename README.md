@@ -15,7 +15,7 @@ Cada rama tiene su propio archivo de documentación (p. ej. `readme_eda.md`, `re
 | `load_data` | [load_data/](load_data/) | Carga y limpieza del dataset | Mariana Valderrama, Alexandra Hurtado |
 | `eda` | [eda/](eda/) | Análisis Exploratorio de Datos + gráficas | Mariana Valderrama, Alexandra Hurtado |
 | `no_supervisado` | [no_supervisado/](no_supervisado/) | Modelos de clustering + scores | Camila Martínez, Alejandra Ocampo |
-| `index_score` | [index_score/](index_score/) | Modelos supervisados + scores | Santiago Manco, Luciana Hoyos |
+| `supervisado` | [index_score/](index_score/) | Modelos supervisados + scores | Santiago Manco, Luciana Hoyos |
 | `visualizacion` | [visualizacion/](visualizacion/) | Gráficas de todos los módulos (EDA, supervisado y no supervisado) | Todos |
 | `desarrollo` | [Desarrollo/](Desarrollo/) | Pipeline principal que integra todas las etapas | Todos |
 | `produccion` | [Produccion/](Produccion/) | Versión de despliegue en producción | Todos |
