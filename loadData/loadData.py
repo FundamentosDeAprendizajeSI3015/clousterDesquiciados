@@ -1,6 +1,7 @@
 # realizado por Mariana Valderrama
 
 import pandas as pd
+import os
 from Limpieza import limpiar_datos
 
 # =========================
@@ -55,12 +56,28 @@ df = df.rename(columns=mapeo_columnas)
 print("Columnas renombradas correctamente:")
 print(df.columns.tolist(), "\n")
 
+
+df = limpiar_datos(df)
+
+# =========================
+# GUARDAR DATASET LIMPIO
+# =========================
+print("\nGuardando dataset limpio...")
+
+ruta_salida = os.path.join(
+    os.path.dirname(__file__),  # carpeta actual (loadData)
+    "..",                       # subir un nivel
+    "dataset_limpio.csv"        # nombre del nuevo archivo
+)
+
+df.to_csv(ruta_salida, index=False)
+
+print(f"✔ Dataset limpio guardado en: {ruta_salida}")
+
 # =========================
 # VISTA GENERAL
 # =========================
 # 
-df = limpiar_datos(df)
-
 print(df.head())
 print("\nInformación del dataset:")
 print(df.info())
