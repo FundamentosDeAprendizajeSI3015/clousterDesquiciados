@@ -1,40 +1,66 @@
-#realizado por Mariana Valderrama
-# CARGA DEL DATA SET
-# Aquí cargamos el archivo de Excel que contiene las respuestas de la encuesta.
-df = pd.read_excel("")
+# realizado por Mariana Valderrama
 
-# Limpieza de nombres de columnas
-# Antes de trabajar con las variables, limpiamos sus nombres.
-# Esto evita errores cuando accedemos a ellas más adelante.
-df.columns = df.columns.str.strip()        # Elimina espacios al inicio o al final
-df.columns = df.columns.str.replace("\n", "")  # Quita saltos de línea ocultos
-df.columns = df.columns.str.lower()        # Convierte todo a minúsculas para mantener uniformidad
+import pandas as pd
+from Limpieza import limpiar_datos
 
-# Eliminar columnas innecesarias
-# Quitamos información como correos, nombres o marcas de tiempo, ya que no aportan valor al análisis estadístico.
+# =========================
+# CARGA DEL DATASET (CSV)
+# =========================
+df = pd.read_csv("../dataset_reemplazabilidad_ia.csv")
+
+print("Dataset cargado correctamente\n")
+
+# =========================
+# LIMPIEZA DE COLUMNAS
+# =========================
+df.columns = df.columns.str.strip()
+df.columns = df.columns.str.replace("\n", "")
+df.columns = df.columns.str.lower()
+
+print("Columnas después de limpieza:")
+print(df.columns.tolist(), "\n")
+
+# =========================
+# ELIMINAR COLUMNAS INNECESARIAS
+# =========================
+# En nuestro dataset actual NO hay columnas basura (como correos o timestamps),
+
+
 cols_eliminar = [
-    '',
-    '',
-    '',
-    '',
-    '',
-    ''
+    
 ]
 
-df = df.drop(columns=cols_eliminar, errors='ignore')  # Si alguna columna no existe, simplemente la ignora
+df = df.drop(columns=cols_eliminar, errors='ignore')
 
-print("\nColumnas eliminadas correctamente:")
-print(cols_eliminar)
+print("Columnas eliminadas correctamente:")
+print(cols_eliminar, "\n")
 
-# RENOMBRAR COLUMNAS LARGAS A VARIABLES MÁS MANEJABLES
-# Las preguntas originales son muy largas, así que las convertimos en nombres más cortos y fáciles de usar dentro del código.
+# =========================
+# RENOMBRAR COLUMNAS 
+# =========================
+# nombres más cortos:
+
 mapeo_columnas = {
-    "",
-    "",
-    ""
+    "nivel_experiencia": "exp",
+    "nivel_rutina": "rutina",
+    "nivel_estructuracion": "estructuracion",
+    "nivel_creatividad": "creatividad",
+    "resolucion_problemas_complejos": "resolucion",
+    "interaccion_humana": "interaccion",
+    "porcentaje_tareas_automatizables": "automatizacion"
 }
 
 df = df.rename(columns=mapeo_columnas)
 
-print("\nColumnas renombradas correctamente:")
-print(df.columns.tolist())
+print("Columnas renombradas correctamente:")
+print(df.columns.tolist(), "\n")
+
+# =========================
+# VISTA GENERAL
+# =========================
+# 
+df = limpiar_datos(df)
+
+print(df.head())
+print("\nInformación del dataset:")
+print(df.info())

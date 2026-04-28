@@ -1,32 +1,66 @@
-#realizado por Mariana Valderrama
-def limpiar_datos(df,
-                  columnas_a_eliminar=None,
-                  columnas_importantes=None,
-                  mapeo_renombrar=None,
-                  columnas_ordinales=None,
-                  columnas_onehot=None):
-                    
-    print("\n" + "="*60)
-    print("LIMPIEZA DE DATOS")
-    print("="*60)
+# Limpieza.py
+import pandas as pd
 
-    print("\n[5.1] Limpiando nombres de columnas...")
-    df = limpiar_nombres_columnas(df)
+def limpiar_datos(df):
 
-    print("\n[5.2] Eliminando variables innecesarias...")
-    df = eliminar_variables_innecesarias(df, columnas_a_eliminar)
+    print("\n" + "="*50)
+    print("INICIANDO LIMPIEZA DE DATOS")
+    print("="*50)
 
-    print("\n[5.3] Manejando valores nulos...")
-    df = manejar_nulos(df, columnas_importantes)
+    filas_iniciales = df.shape[0]
 
-    print("\n[5.4] Renombrando columnas...")
-    df = renombrar_columnas(df, mapeo_renombrar)
+    # -------------------------
+    # 1. Duplicados
+    # -------------------------
+    df = df.drop_duplicates().copy()
 
-    print("\n[5.5] Asegurando tipos numéricos...")
-    df = asegurar_tipos_numericos(df)
+    # -------------------------
+    # 2. Tipos numéricos
+    # -------------------------
+    for col in df.columns:
+        df.loc[:, col] = pd.to_numeric(df[col], errors='coerce')
 
-    print("\n[5.6] Transformando variables categóricas...")
-    df = transformar_categoricas(df, columnas_ordinales, columnas_onehot)
+    # -------------------------
+    # 3. Nulos
+    # -------------------------
+    # numéricos
+    df = df.fillna(df.mean(numeric_only=True))
 
-    print(f"\nLimpieza completada. Shape final: {df.shape}")
+    # categóricos
+    for col in df.select_dtypes(include='object').columns:
+        df.loc[:, col] = df[col].fillna("desconocido")
+
+    # -------------------------
+    # 4. Escalas (1–5)
+    # -------------------------
+    columnas_escala = ["exp","rutina","estructuracion","creatividad","resolucion","interaccion"]
+
+    for col in columnas_escala:
+        if col in df.columns:
+            df[col] = df[col].clip(1, 5)
+
+    print("Escalas corregidas (1–5)")
+
+    # -------------------------
+    # 5. Target
+    # -------------------------
+    if "automatizacion" in df.columns:
+        df["automatizacion"] = df["automatizacion"].clip(0, 100)
+        print("Target validado (0–100)")
+
+    # -------------------------
+    # VALIDACIÓN FINAL
+    # -------------------------
+    filas_finales = df.shape[0]
+
+    if df.isnull().sum().sum() == 0:
+        print("\n" + "="*50)
+        print(" LIMPIEZA COMPLETADA CON ÉXITO")
+        print("="*50)
+        print(f"Filas iniciales: {filas_iniciales}")
+        print(f"Filas finales: {filas_finales}")
+        print("Dataset listo para análisis \n")
+    else:
+        print("\n Limpieza incompleta: aún hay valores nulos")
+
     return df
