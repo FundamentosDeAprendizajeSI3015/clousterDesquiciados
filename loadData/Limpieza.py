@@ -14,7 +14,7 @@ def limpiar_datos(df):
     # -------------------------
     duplicados = df.duplicated().sum()
     df = df.drop_duplicates().copy()
-    print(f"✔ Duplicados eliminados: {duplicados}")
+    print(f"Duplicados eliminados: {duplicados}")
 
     # -------------------------
     # 2. DEFINIR COLUMNAS NUMÉRICAS
@@ -30,7 +30,7 @@ def limpiar_datos(df):
         if col in df.columns:
             df.loc[:, col] = pd.to_numeric(df[col], errors='coerce')
 
-    print("✔ Conversión a numérico realizada")
+    print(" Conversión a numérico realizada")
 
     # -------------------------
     # 3. MANEJO DE NULOS
@@ -48,7 +48,7 @@ def limpiar_datos(df):
     for col in df.select_dtypes(include='object').columns:
         df.loc[:, col] = df[col].fillna("desconocido")
 
-    print("✔ Nulos tratados correctamente")
+    print("Nulos tratados correctamente")
 
     # -------------------------
     # 4. CORREGIR ESCALAS (1–5)
@@ -62,7 +62,7 @@ def limpiar_datos(df):
         if col in df.columns:
             df.loc[:, col] = df[col].clip(1, 5)
 
-    print("✔ Escalas corregidas (1–5)")
+    print(" Escalas corregidas (1–5)")
 
     # -------------------------
     # 5. TARGET (CATEGORIZADO)
@@ -83,7 +83,7 @@ def limpiar_datos(df):
 
         df["automatizacion_cat"] = df["automatizacion"].apply(categorizar)
 
-        print("✔ Target convertido a categorías (baja, media, alta)")
+        print(" Target convertido a categorías (baja, media, alta)")
 
     # -------------------------
     # VALIDACIÓN FINAL
