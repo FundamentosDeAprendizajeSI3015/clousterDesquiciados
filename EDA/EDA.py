@@ -180,7 +180,7 @@ def graficar_pairplot(df, target_col, max_vars=6, save_path=None):
 # =============================================================================
 
 def ejecutar_eda(df, target_col):
-    save_path = "visualizaciones"
+    save_path = "visualizaciones/EDA"
 
     desc = inspeccion_inicial(df)
     tendencia_central(df)
