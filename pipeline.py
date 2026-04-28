@@ -1,7 +1,10 @@
 
 from loadData.loadData import cargar_datos
 from loadData.Limpieza import limpiar_datos
-import os
+from EDA.EDA import ejecutar_eda
+import os  
+import pandas as pd
+
 
 def main():
 
@@ -25,6 +28,16 @@ def main():
 
     print("\nPipeline ejecutado correctamente")
     print(f" Archivo generado: {ruta_salida}")
+    
+    #4.EDA
+    print("\nIniciando Análisis Exploratorio de Datos...")
+    resultados = ejecutar_eda(
+        df,
+        target_col="automatizacion"
+)
+
+    print(resultados["stats"])
 
 if __name__ == "__main__":
     main()
+    
