@@ -1,6 +1,5 @@
 # =============================================================================
 # MÓDULO: Análisis Exploratorio de Datos (EDA)
-# Autores: Mariana Valderrama, Alexandra Hurtado
 # =============================================================================
 
 import os
@@ -11,256 +10,193 @@ import seaborn as sns
 
 
 # =============================================================================
-# 3.1  INSPECCIÓN INICIAL
+# 3.1 INSPECCIÓN INICIAL
 # =============================================================================
 
 def inspeccion_inicial(df):
-    """
-    Muestra un resumen estructural del DataFrame:
-    primeras filas, dimensiones, tipos, nulos y duplicados.
-
-    Parámetros
-    ----------
-    df : pd.DataFrame
-
-    Retorna
-    -------
-    pd.DataFrame  Tabla de estadísticas generales (describe).
-    """
     print("\n" + "=" * 60)
     print("3.1  INSPECCIÓN INICIAL")
     print("=" * 60)
 
-    # TODO: imprimir primeras filas, dimensiones, tipos, nulos y duplicados
+    print("\nPrimeras filas:")
+    print(df.head())
+
+    print("\nDimensiones:")
+    print(df.shape)
+
+    print("\nTipos de datos:")
+    print(df.dtypes)
+
+    print("\nValores nulos:")
+    print(df.isnull().sum())
+
+    print("\nDuplicados:")
+    print(df.duplicated().sum())
 
     return df.describe(include="all")
 
 
 # =============================================================================
-# 3.2  MEDIDAS DE TENDENCIA CENTRAL
-# Nos indican el valor típico o representativo de cada variable.
+# 3.2 TENDENCIA CENTRAL
 # =============================================================================
 
 def tendencia_central(df):
-    """
-    Imprime media, mediana y moda de las variables numéricas del DataFrame.
-
-    Parámetros
-    ----------
-    df : pd.DataFrame
-    """
     print("\n" + "=" * 60)
-    print("3.2  MEDIDAS DE TENDENCIA CENTRAL")
+    print("3.2  TENDENCIA CENTRAL")
     print("=" * 60)
-    print("  Nos indican el valor típico de las variables.\n")
 
-    # TODO: iterar sobre columnas numéricas e imprimir media, mediana y moda
+    num_cols = df.select_dtypes(include=np.number).columns
+
+    for col in num_cols:
+        print(f"\nColumna: {col}")
+        print(f"Media: {df[col].mean()}")
+        print(f"Mediana: {df[col].median()}")
+        print(f"Moda: {df[col].mode().values}")
 
 
 # =============================================================================
-# 3.3  MEDIDAS DE DISPERSIÓN
-# Nos indican qué tan dispersos o concentrados están los datos.
+# 3.3 DISPERSIÓN
 # =============================================================================
 
 def dispersion(df):
-    """
-    Imprime desviación estándar, varianza, rango e IQR
-    de las variables numéricas del DataFrame.
-
-    Parámetros
-    ----------
-    df : pd.DataFrame
-    """
     print("\n" + "=" * 60)
-    print("3.3  MEDIDAS DE DISPERSIÓN")
+    print("3.3  DISPERSIÓN")
     print("=" * 60)
-    print("  Nos indican qué tan dispersos están los datos.\n")
 
-    # TODO: iterar sobre columnas numéricas e imprimir desv. std, varianza, rango e IQR
+    num_cols = df.select_dtypes(include=np.number).columns
+
+    for col in num_cols:
+        print(f"\nColumna: {col}")
+        print(f"Std: {df[col].std()}")
+        print(f"Var: {df[col].var()}")
+        print(f"Rango: {df[col].max() - df[col].min()}")
+        print(f"IQR: {df[col].quantile(0.75) - df[col].quantile(0.25)}")
 
 
 # =============================================================================
-# 3.4  TABLA RESUMEN COMPLETA
-# Consolida tendencia central y dispersión en un solo DataFrame.
+# 3.4 ESTADÍSTICAS DESCRIPTIVAS
 # =============================================================================
 
 def estadisticas_descriptivas(df):
-    """
-    Calcula en una sola tabla: media, mediana, moda, desv. estándar,
-    varianza, coeficiente de variación, rango, asimetría, curtosis,
-    mín, Q1, Q3, máx e IQR.
-
-    Parámetros
-    ----------
-    df : pd.DataFrame
-
-    Retorna
-    -------
-    pd.DataFrame  Una fila por variable numérica.
-    """
     print("\n" + "=" * 60)
-    print("3.4  ESTADÍSTICAS DESCRIPTIVAS — TABLA RESUMEN")
+    print("3.4  TABLA RESUMEN")
     print("=" * 60)
 
-    # TODO: construir DataFrame de stats con todas las métricas y retornarlo
+    num_cols = df.select_dtypes(include=np.number).columns
+    stats = []
+
+    for col in num_cols:
+        serie = df[col]
+
+        stats.append({
+            "variable": col,
+            "media": serie.mean(),
+            "mediana": serie.median(),
+            "moda": serie.mode().iloc[0] if not serie.mode().empty else np.nan,
+            "std": serie.std(),
+            "var": serie.var(),
+            "coef_var": serie.std() / serie.mean() if serie.mean() != 0 else 0,
+            "min": serie.min(),
+            "q1": serie.quantile(0.25),
+            "q3": serie.quantile(0.75),
+            "max": serie.max(),
+            "iqr": serie.quantile(0.75) - serie.quantile(0.25),
+            "skew": serie.skew(),
+            "kurtosis": serie.kurtosis()
+        })
+
+    return pd.DataFrame(stats)
 
 
 # =============================================================================
-# 3.5  VISUALIZACIONES
+# 3.5 VISUALIZACIONES
 # =============================================================================
 
-# -----------------------------------------------------------------------------
-# Boxplots
-# Permiten visualizar la distribución y detectar outliers por variable.
-# -----------------------------------------------------------------------------
+def graficar_boxplots(df, save_path):
+    num_cols = df.select_dtypes(include=np.number).columns
 
-def graficar_boxplots(df, save_path=None):
-    """
-    Genera un boxplot por cada variable numérica del DataFrame.
-
-    Parámetros
-    ----------
-    df        : pd.DataFrame
-    save_path : str | None  Carpeta donde guardar la imagen.
-    """
-    # TODO: crear subplots y graficar un boxplot por columna numérica
+    plt.figure(figsize=(12, 6))
+    df[num_cols].boxplot()
+    plt.xticks(rotation=45)
 
     _guardar(save_path, "boxplots.png")
-    plt.show()
+    plt.close()
 
 
-# -----------------------------------------------------------------------------
-# Histogramas
-# Permiten observar la distribución de frecuencia de cada variable.
-# -----------------------------------------------------------------------------
+def graficar_histogramas(df, bins=10, save_path=None):
+    num_cols = df.select_dtypes(include=np.number).columns
 
-def graficar_histogramas(df, bins=5, save_path=None):
-    """
-    Genera un histograma por cada variable numérica del DataFrame.
-
-    Parámetros
-    ----------
-    bins : int  Número de intervalos (ajustar según los datos).
-    """
-    # TODO: crear subplots y graficar un histograma por columna numérica
+    df[num_cols].hist(bins=bins, figsize=(12, 8))
 
     _guardar(save_path, "histogramas.png")
-    plt.show()
+    plt.close()
 
 
-# -----------------------------------------------------------------------------
-# Matriz de correlación
-# Permite identificar relaciones lineales entre variables.
-# -----------------------------------------------------------------------------
+def graficar_correlacion(df, save_path):
+    num_cols = df.select_dtypes(include=np.number).columns
+    corr = df[num_cols].corr()
 
-def graficar_correlacion(df, save_path=None):
-    """
-    Mapa de calor de la matriz de correlación (triángulo inferior).
-    """
-    # TODO: calcular corr(), aplicar máscara triangular y graficar heatmap
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(corr, annot=True, cmap="coolwarm")
 
     _guardar(save_path, "correlacion.png")
-    plt.show()
+    plt.close()
 
 
-# -----------------------------------------------------------------------------
-# Gráfico de dispersión
-# Observamos la relación entre dos variables específicas.
-# -----------------------------------------------------------------------------
+def graficar_dispersion(df, x, y, save_path):
+    if x in df.columns and y in df.columns:
+        plt.figure()
+        sns.scatterplot(x=df[x], y=df[y])
 
-def graficar_dispersion(df, x, y, save_path=None):
-    """
-    Scatter plot entre dos variables numéricas.
-
-    Parámetros
-    ----------
-    x : str  Variable en el eje X.
-    y : str  Variable en el eje Y.
-    """
-    # TODO: validar que x e y existen en df y graficar scatter
-
-    _guardar(save_path, f"dispersion_{x}_vs_{y}.png")
-    plt.show()
+        _guardar(save_path, f"dispersion_{x}_{y}.png")
+        plt.close()
 
 
-# -----------------------------------------------------------------------------
-# Distribución de la variable objetivo (target)
-# -----------------------------------------------------------------------------
+def graficar_target(df, target_col, save_path):
+    plt.figure()
 
-def graficar_target(df, target_col, save_path=None):
-    """
-    Muestra la distribución de la variable objetivo.
-    - Si tiene pocas categorías: barras + pastel.
-    - Si es continua: histograma + KDE.
+    if df[target_col].nunique() < 10:
+        df[target_col].value_counts().plot(kind="bar")
+    else:
+        sns.histplot(df[target_col], kde=True)
 
-    Parámetros
-    ----------
-    target_col : str  Nombre de la columna objetivo.
-    """
-    # TODO: detectar si el target es categórico o continuo y graficar en consecuencia
+    _guardar(save_path, "target.png")
+    plt.close()
 
-    _guardar(save_path, "target_distribucion.png")
-    plt.show()
-
-
-# -----------------------------------------------------------------------------
-# Pairplot
-# Relaciones cruzadas entre las primeras variables numéricas.
-# -----------------------------------------------------------------------------
 
 def graficar_pairplot(df, target_col, max_vars=6, save_path=None):
-    """
-    Pairplot de hasta `max_vars` variables numéricas, coloreado por target.
+    num_cols = df.select_dtypes(include=np.number).columns.tolist()
 
-    Parámetros
-    ----------
-    max_vars : int  Máximo de variables a incluir (evita gráficos muy densos).
-    """
-    # TODO: seleccionar columnas, convertir target a string y llamar sns.pairplot
+    cols = num_cols[:max_vars]
+
+    sns.pairplot(df[cols + [target_col]], hue=target_col)
 
     _guardar(save_path, "pairplot.png")
-    plt.show()
+    plt.close()
 
 
 # =============================================================================
-# 3.6  PIPELINE EDA COMPLETO
-# Punto de entrada único que llama a todas las funciones en orden.
+# PIPELINE EDA
 # =============================================================================
 
-def ejecutar_eda(df, target_col, save_path=None):
-    """
-    Ejecuta el EDA completo en el orden correcto:
-        1. Inspección inicial
-        2. Tendencia central
-        3. Dispersión
-        4. Tabla resumen
-        5. Boxplots
-        6. Histogramas
-        7. Matriz de correlación
-        8. Dispersión entre variables clave
-        9. Distribución del target
-        10. Pairplot
+def ejecutar_eda(df, target_col):
+    save_path = "visualizaciones"
 
-    Parámetros
-    ----------
-    df         : pd.DataFrame
-    target_col : str   Nombre de la variable objetivo.
-    save_path  : str   Carpeta donde guardar los gráficos generados.
-
-    Retorna
-    -------
-    dict  Con claves 'describe' y 'stats' para uso en desarrollo.py.
-    """
-    desc  = inspeccion_inicial(df)
+    desc = inspeccion_inicial(df)
     tendencia_central(df)
     dispersion(df)
     stats = estadisticas_descriptivas(df)
 
-    print("\n[3.5] Generando visualizaciones...")
+    print("\nGenerando visualizaciones...")
+
     graficar_boxplots(df, save_path)
     graficar_histogramas(df, save_path=save_path)
     graficar_correlacion(df, save_path)
-    graficar_dispersion(df, save_path=save_path)      # TODO: definir x e y
+
+    num_cols = df.select_dtypes(include=np.number).columns
+    if len(num_cols) >= 2:
+        graficar_dispersion(df, num_cols[0], num_cols[1], save_path)
+
     graficar_target(df, target_col, save_path)
     graficar_pairplot(df, target_col, save_path=save_path)
 
@@ -268,13 +204,14 @@ def ejecutar_eda(df, target_col, save_path=None):
 
 
 # =============================================================================
-# HELPERS INTERNOS
+# HELPER
 # =============================================================================
 
 def _guardar(save_path, nombre_archivo):
-    """Guarda la figura activa en save_path/nombre_archivo si se indicó ruta."""
-    if save_path:
-        os.makedirs(save_path, exist_ok=True)
-        ruta = os.path.join(save_path, nombre_archivo)
-        plt.savefig(ruta, bbox_inches="tight", dpi=150)
-        print(f"  Guardado: {ruta}")
+    os.makedirs(save_path, exist_ok=True)
+
+    ruta = os.path.join(save_path, nombre_archivo)
+
+    plt.savefig(ruta, bbox_inches="tight", dpi=150)
+
+    print(f"Guardado: {ruta}")
