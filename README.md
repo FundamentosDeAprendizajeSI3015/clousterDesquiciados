@@ -1,193 +1,54 @@
-# Aprendizaje No Supervisado
- 
-Esta sección cubre los módulos 9 y 10 del pipeline: clustering con K-Means sobre el conjunto de entrenamiento y una posible corrección de etiquetas basada en los patrones encontrados.
- 
-Los datos llegan limpios, escalados y particionados (60/20/20) desde los pasos anteriores del pipeline. K-Means se ajusta únicamente sobre `X_train`; `X_val` y `X_test` se asignan con `predict()` sin recalcular los centroides.
- 
+# Proyecto Desquisiados
+
+## Estructura de trabajo
+
+El proyecto está organizado por **ramas de Git**, donde cada rama corresponde a una etapa del pipeline de Machine Learning. Cada rama tiene su propia carpeta con el código de esa etapa.
+
 ---
- 
-## Contenido
- 
-- [Selección del número de clusters](#selección-del-número-de-clusters)
-  - [Método del codo](#método-del-codo)
-  - [Silhouette Score](#silhouette-score)
-  - [Diagrama Silhouette detallado](#diagrama-silhouette-detallado)
-- [Entrenamiento final](#entrenamiento-final)
-- [Visualización de clusters](#visualización-de-clusters)
-- [Corrección de etiquetas](#corrección-de-etiquetas)
-- [Uso del pipeline](#uso-del-pipeline)
+
+## Ramas y carpetas
+
+Cada rama tiene su propio archivo de documentación (p. ej. `readme_eda.md`, `readme_supervisado.md`) dentro de su carpeta.
+
+| Rama | Carpeta | Descripción | Integrantes |
+|---|---|---|---|
+| `load_data` | [load_data/](load_data/) | Carga y limpieza del dataset | Mariana Valderrama, Alexandra Hurtado |
+| `eda` | [eda/](eda/) | Análisis Exploratorio de Datos + gráficas | Mariana Valderrama, Alexandra Hurtado |
+| `no_supervisado` | [no_supervisado/](no_supervisado/) | Modelos de clustering + scores | Camila Martínez, Alejandra Ocampo |
+| `supervisado` | [supervisado/](supervisado/) | Modelos supervisados + scores | Santiago Manco, Luciana Hoyos |
+| `visualizacion` | [visualizacion/](visualizacion/) | Gráficas de todos los módulos (EDA, supervisado y no supervisado) | Todos |
+| `desarrollo` | [Desarrollo/](Desarrollo/) | Pipeline principal que integra todas las etapas | Todos |
+| `produccion` | [Produccion/](Produccion/) | Versión de despliegue en producción | Todos |
+
+> Las gráficas generadas por cada módulo deben guardarse en [visualizacion/graficas/](visualizacion/graficas/).
+> Los scores y métricas deben guardarse en [index_score/](index_score/).
+
+### Carpeta adicional
+
+| Carpeta | Descripción |
+|---|---|
+| [data/](data/) | Datasets de entrada y salida (no se sube al repositorio) |
+
 ---
- 
-## Selección del número de clusters
- 
-### Método del codo
- 
-Se entrena K-Means para `k = 2..12` y se grafica la inercia (WCSS) en función de `k`. El punto de mayor curvatura se detecta automáticamente con la segunda derivada y se marca como `k` sugerido.
- 
-```python
-inercias, k_codo = metodo_codo(X_train, k_min=2, k_max=12, save_path="plots/")
-```
- 
-**Gráfica:**
- 
-```
-Inercia
-  │
-  │●
-  │  ●
-  │     ●
-  │        ●──────────────
-  └─────────────────────── k
-     2  3  4  5  6 ...
-```
- 
-> El codo visual no siempre coincide con el mínimo de inercia. Revisar la gráfica junto con el Silhouette antes de tomar la decisión final.
- 
+
+## Integrantes y responsabilidades
+
+| Nombre | Responsabilidad |
+|---|---|
+| Mariana Valderrama | Carga de datos, EDA y gráficas |
+| Alexandra Hurtado | Carga de datos, EDA y gráficas |
+| Santiago Manco | Modelos supervisados, gráficas y scores |
+| Luciana Hoyos | Modelos supervisados, gráficas y scores |
+| Camila Martínez | Modelos no supervisados, gráficas y scores |
+| Alejandra Ocampo | Modelos no supervisados, gráficas y scores |
+
 ---
- 
-### Silhouette Score
- 
-Para cada `k` se calcula el coeficiente de Silhouette promedio sobre `X_train`:
- 
-```
-s(i) = (b(i) − a(i)) / max(a(i), b(i))
-```
- 
-donde `a(i)` es la distancia media intra-cluster y `b(i)` la distancia media al cluster más cercano. El score global es el promedio sobre todos los puntos.
- 
-| Valor | Interpretación |
-|-------|----------------|
-| Cercano a 1 | Clusters bien separados y compactos |
-| Cercano a 0 | Puntos en la frontera entre clusters |
-| Negativo | Puntos posiblemente mal asignados |
- 
-```python
-scores_sil, k_sil = evaluar_silhouette(X_train, k_min=2, k_max=12, save_path="plots/")
-```
- 
----
- 
-### Diagrama Silhouette detallado
- 
-Para el `k` elegido se genera un diagrama por cluster que muestra el coeficiente individual de cada punto. Permite detectar clusters desbalanceados o con muchos valores negativos.
- 
-```python
-graficar_silhouette_detalle(X_train, k=K_FINAL, save_path="plots/")
-```
- 
-```
-Cluster 0  ████████████████████
-Cluster 1  ███████████████
-Cluster 2  █████████████████████████
-           │
-           └── línea roja: score promedio
-```
- 
----
- 
-## Entrenamiento final
- 
-Con el `k` elegido se entrena el modelo definitivo sobre `X_train`. Una vez fijados los centroides, se asignan clusters al resto de los splits sin reentrenar.
- 
-```python
-modelo_km, etiquetas_train = ajustar_kmeans(X_train, k=K_FINAL)
- 
-etiquetas_val  = modelo_km.predict(X_val)
-etiquetas_test = modelo_km.predict(X_test)
-```
- 
-**Métricas reportadas:**
- 
-| Métrica | Descripción |
-|---------|-------------|
-| Inercia (WCSS) | Suma de distancias al cuadrado al centroide |
-| Silhouette Score | Calidad global de la separación de clusters |
- 
----
- 
-## Visualización de clusters
- 
-Se proyectan los datos de `X_train` a 2D para visualizar los clusters. Se generan dos gráficas con métodos distintos de reducción de dimensionalidad.
- 
-**PCA** — lineal, determinista, rápido. Muestra el porcentaje de varianza explicada por cada componente.
- 
-```python
-visualizar_clusters_pca(X_train, etiquetas_train, save_path="plots/")
-```
- 
-**UMAP** — no lineal, preserva mejor la estructura local. Útil cuando PCA no separa visualmente los clusters.
- 
-```python
-visualizar_clusters_umap(X_train, etiquetas_train, save_path="plots/")
-```
- 
-> Si `umap-learn` no está instalado, la función UMAP emite una advertencia y se omite sin interrumpir el pipeline. Instalar con `pip install umap-learn`.
- 
----
- 
-## Corrección de etiquetas
- 
-Con los clusters encontrados se construye un mapeo `cluster → clase real dominante` usando votación mayoritaria. Para cada cluster se identifica la clase más frecuente en `y_train` y se crea un vector de etiquetas propuestas.
- 
-```python
-etiquetas_corregidas, mapeo = corregir_etiquetas(df_train, etiquetas_train, target_col="target")
-```
- 
-**Ejemplo de salida:**
- 
-```
-Cluster 0 → Clase real predominante: 1
-Cluster 1 → Clase real predominante: 0
-Cluster 2 → Clase real predominante: 1
- 
-Concordancia cluster-etiqueta real: 84.3%
-```
- 
-> **Este paso es opcional.** Solo aplicar si la concordancia es alta y los clusters muestran un silhouette sólido. Si los clusters están mezclados, el re-etiquetado introduce más ruido del que corrige.
- 
----
- 
-## Uso del pipeline
- 
-Todas las funciones anteriores están encapsuladas en `ejecutar_no_supervisado()`, que corre el flujo completo en una sola llamada.
- 
-```python
-from analisis_no_supervisado import ejecutar_no_supervisado
- 
-resultados = ejecutar_no_supervisado(
-    X          = X_train,
-    df         = df_train,         # necesario para corrección de etiquetas
-    target_col = "target",
-    k_min      = 2,
-    k_max      = 12,
-    k_forzado  = None,             # si se quiere fijar k manualmente
-    save_path  = "plots/"
-)
-```
- 
-El diccionario `resultados` contiene:
- 
-| Clave | Contenido |
-|-------|-----------|
-| `modelo` | Objeto `KMeans` entrenado |
-| `etiquetas` | Asignaciones de cluster para `X_train` |
-| `etiquetas_corregidas` | Etiquetas propuestas tras el mapeo |
-| `mapeo_clusters` | Diccionario `cluster → clase dominante` |
-| `k_final` | K usado en el modelo final |
-| `silhouette_scores` | Scores por cada k evaluado |
- 
----
- 
-## Dependencias
- 
-```txt
-scikit-learn>=1.3
-pandas>=2.0
-numpy>=1.24
-matplotlib>=3.7
-umap-learn>=0.5      # opcional, solo para visualización UMAP
-```
- 
+
+## Cómo ejecutar el pipeline completo
+
 ```bash
-pip install -r requirements.txt
+pip install pandas numpy matplotlib seaborn scikit-learn umap-learn scipy
+
+cd Desarrollo
+python pipeline.py
 ```
