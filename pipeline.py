@@ -2,7 +2,7 @@
 from loadData.loadData import cargar_datos
 from loadData.Limpieza import limpiar_datos
 from EDA.EDA import ejecutar_eda
-from no_supervisado.no_supervisado import ejecutar_no_supervisado
+from no_supervisado.no_supervisado import ejecutar_no_supervisado, reasignar_etiquetas
 import os
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -64,7 +64,17 @@ def main():
         save_path=ruta_vis_ns,
     )
 
-    # 10. Corrección de etiquetas — resumen (la corrección ocurre dentro de ejecutar_no_supervisado)
+    # 10. Reasignación de etiquetas + gráficas (confusión, PCA, distribución)
+    if resultados_ns["mapeo_clusters"] is not None:
+        etiquetas_reasignadas = reasignar_etiquetas(
+            df,
+            resultados_ns["etiquetas"],
+            X_scaled,
+            resultados_ns["mapeo_clusters"],
+            target_col="automatizacion_cat",
+            save_path=ruta_vis_ns,
+        )
+
     print("\n" + "="*60)
     print("RESUMEN ANÁLISIS NO SUPERVISADO")
     print("="*60)

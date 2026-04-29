@@ -209,7 +209,7 @@ def corregir_etiquetas(df, etiquetas_cluster, target_col='target'):
     cluster → clase real.
     """
     print("\n" + "="*60)
-    print("10. CORRECCIÓN DE ETIQUETAS")
+    print("Mapeo clusters → clases (votación mayoritaria)")
     print("="*60)
 
     df_temp = df.copy()
@@ -231,6 +231,155 @@ def corregir_etiquetas(df, etiquetas_cluster, target_col='target'):
     print(f"\n  Concordancia cluster-etiqueta real: {coincidencias:.1f}%")
 
     return etiquetas_corregidas, mapeo
+
+
+# -----------------------------------------------------------------------------
+# 10. Reasignación de etiquetas con visualizaciones
+# -----------------------------------------------------------------------------
+
+def reasignar_etiquetas(df, etiquetas_cluster, X_scaled, mapeo_clusters,
+                        target_col='automatizacion_cat', save_path=None):
+    """
+    10. REASIGNACIÓN DE ETIQUETAS
+    Asigna a cada estudiante la clase mayoritaria de su cluster K-Means.
+    Genera tres gráficas:
+      1. Matriz de confusión (falsos positivos / falsos negativos)
+      2. PCA 2D coloreado por etiqueta reasignada
+      3. Distribución comparativa original vs reasignada
+    Retorna el array con las etiquetas reasignadas.
+    """
+    print("\n" + "="*60)
+    print("10. REASIGNACIÓN DE ETIQUETAS (K-Means)")
+    print("="*60)
+
+    etiquetas_orig  = df[target_col].values
+    etiquetas_nuevas = pd.Series(etiquetas_cluster).map(mapeo_clusters).values
+
+    orden = ['baja', 'media', 'alta']
+    clases = [c for c in orden if c in (set(etiquetas_orig) | set(etiquetas_nuevas))]
+
+    cambios      = (etiquetas_nuevas != etiquetas_orig).sum()
+    concordancia = (etiquetas_nuevas == etiquetas_orig).mean() * 100
+
+    print(f"\n  Total estudiantes:      {len(etiquetas_nuevas)}")
+    print(f"  Etiquetas modificadas:  {cambios} ({100 - concordancia:.1f}%)")
+    print(f"  Concordancia final:     {concordancia:.1f}%")
+
+    _graficar_confusion(etiquetas_orig, etiquetas_nuevas, clases, save_path)
+    _graficar_pca_etiquetas(
+        X_scaled, etiquetas_nuevas, clases,
+        titulo='Perfil Reemplazabilidad IA — Etiquetas Reasignadas (PCA)',
+        save_path=save_path,
+        nombre_archivo='reasignacion_pca.png',
+    )
+    _graficar_distribucion_comparativa(etiquetas_orig, etiquetas_nuevas, clases, save_path)
+
+    return etiquetas_nuevas
+
+
+def _graficar_confusion(y_orig, y_nuevo, clases, save_path):
+    """Matriz de confusión: etiqueta original vs reasignada por K-Means."""
+    from sklearn.metrics import confusion_matrix
+
+    cm     = confusion_matrix(y_orig, y_nuevo, labels=clases)
+    thresh = cm.max() / 2
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    im = ax.imshow(cm, interpolation='nearest', cmap='Blues')
+    plt.colorbar(im, ax=ax, label='N° estudiantes')
+
+    ax.set_xticks(range(len(clases)))
+    ax.set_yticks(range(len(clases)))
+    ax.set_xticklabels([c.capitalize() for c in clases], fontsize=11)
+    ax.set_yticklabels([c.capitalize() for c in clases], fontsize=11)
+
+    for i in range(len(clases)):
+        for j in range(len(clases)):
+            color = 'white' if cm[i, j] > thresh else 'black'
+            ax.text(j, i, str(cm[i, j]), ha='center', va='center',
+                    fontsize=14, fontweight='bold', color=color)
+        # Resaltar diagonal en verde (concordancias)
+        ax.add_patch(plt.Rectangle((i - 0.5, i - 0.5), 1, 1,
+                                   fill=False, edgecolor='green', lw=2.5))
+
+    ax.set_title(
+        'Matriz de Confusión — Reemplazabilidad IA\n'
+        'Etiqueta Original vs Reasignada (K-Means)\n'
+        'Verde = coincidencia  |  Resto = reasignación (posible FP / FN)',
+        fontsize=11, fontweight='bold',
+    )
+    ax.set_xlabel('Etiqueta Reasignada (K-Means)', fontsize=11)
+    ax.set_ylabel('Etiqueta Original', fontsize=11)
+    plt.tight_layout()
+    _guardar(save_path, 'reasignacion_confusion.png')
+    plt.show()
+
+
+def _graficar_pca_etiquetas(X_scaled, etiquetas, clases, titulo, save_path, nombre_archivo):
+    """PCA 2D coloreado por clase de reemplazabilidad reasignada."""
+    pca   = PCA(n_components=2, random_state=42)
+    X_2d  = pca.fit_transform(X_scaled)
+    var_exp = pca.explained_variance_ratio_
+
+    paleta = {'baja': '#2ecc71', 'media': '#f39c12', 'alta': '#e74c3c'}
+    marcas  = {'baja': 'o',      'media': 's',        'alta': '^'}
+
+    fig, ax = plt.subplots(figsize=(10, 7))
+    for clase in clases:
+        mask = etiquetas == clase
+        ax.scatter(
+            X_2d[mask, 0], X_2d[mask, 1],
+            c=paleta.get(clase, 'gray'),
+            marker=marcas.get(clase, 'o'),
+            label=f'{clase.capitalize()} ({mask.sum()})',
+            alpha=0.75, s=60, edgecolors='k', linewidths=0.3,
+        )
+
+    ax.set_title(titulo, fontsize=13, fontweight='bold')
+    ax.set_xlabel(f'PC1 ({var_exp[0]*100:.1f}% varianza)')
+    ax.set_ylabel(f'PC2 ({var_exp[1]*100:.1f}% varianza)')
+    ax.legend(title='Perfil Reemplaz. IA', fontsize=10)
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    _guardar(save_path, nombre_archivo)
+    plt.show()
+
+
+def _graficar_distribucion_comparativa(y_orig, y_nuevo, clases, save_path):
+    """Barras agrupadas: distribución original vs reasignada por K-Means."""
+    orig_counts  = pd.Series(y_orig).value_counts().reindex(clases, fill_value=0)
+    nuevo_counts = pd.Series(y_nuevo).value_counts().reindex(clases, fill_value=0)
+
+    x     = np.arange(len(clases))
+    width = 0.35
+
+    fig, ax = plt.subplots(figsize=(9, 6))
+    b1 = ax.bar(x - width / 2, orig_counts.values,  width,
+                label='Original',              color='steelblue', alpha=0.85,
+                edgecolor='k', linewidth=0.5)
+    b2 = ax.bar(x + width / 2, nuevo_counts.values, width,
+                label='Reasignada (K-Means)', color='coral',     alpha=0.85,
+                edgecolor='k', linewidth=0.5)
+
+    for bar in list(b1) + list(b2):
+        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
+                str(int(bar.get_height())), ha='center', va='bottom',
+                fontsize=10, fontweight='bold')
+
+    ax.set_title(
+        'Distribución de Perfiles de Reemplazabilidad IA\n'
+        'Original vs Reasignada por K-Means',
+        fontsize=13, fontweight='bold',
+    )
+    ax.set_xlabel('Perfil de Reemplazabilidad')
+    ax.set_ylabel('N° Estudiantes de Ing. Sistemas')
+    ax.set_xticks(x)
+    ax.set_xticklabels([c.capitalize() for c in clases], fontsize=11)
+    ax.legend(fontsize=10)
+    ax.grid(True, alpha=0.3, axis='y')
+    plt.tight_layout()
+    _guardar(save_path, 'reasignacion_distribucion.png')
+    plt.show()
 
 
 # -----------------------------------------------------------------------------
