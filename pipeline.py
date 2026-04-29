@@ -3,6 +3,8 @@ from loadData.loadData import cargar_datos
 from loadData.Limpieza import limpiar_datos
 from EDA.EDA import ejecutar_eda
 from no_supervisado.no_supervisado import ejecutar_no_supervisado
+from indexesScore.Score import calcular_todas_metricas, imprimir_reporte
+from indexesScore.score_nosuperviced.graficas import generar_todas_graficas
 import os
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -73,6 +75,22 @@ def main():
         print("\n  Mapeo clusters → clase real:")
         for cluster_id, clase in resultados_ns["mapeo_clusters"].items():
             print(f"    Cluster {cluster_id} → {clase}")
+
+    # 11. Métricas del clustering (Accuracy, F1, Precisión, Recall, R²)
+    if resultados_ns["etiquetas_corregidas"] is not None:
+        resultados_metricas = calcular_todas_metricas(
+            y_true_cat           = df["automatizacion_cat"].values,
+            y_continuo           = df["automatizacion"].values,
+            etiquetas_raw        = resultados_ns["etiquetas"],
+            etiquetas_corregidas = resultados_ns["etiquetas_corregidas"],
+        )
+        imprimir_reporte(resultados_metricas)
+
+        ruta_score = os.path.join(
+            os.path.dirname(__file__),
+            "visualizaciones", "no_supervisado_metricas"
+        )
+        generar_todas_graficas(resultados_metricas, save_path=ruta_score)
 
 
 if __name__ == "__main__":
