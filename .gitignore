@@ -14,3 +14,4 @@ build/
 Thumbs.db
 .ipynb_checkpoints/
 __init__.py
+dataset_limpio.csv
