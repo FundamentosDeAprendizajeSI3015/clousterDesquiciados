@@ -41,10 +41,10 @@ def limpiar_datos(df):
         df[columnas_numericas].mean()
     )
 
-    # redondear (evita decimales raros)
+    # redondear evita decimales 
     df[columnas_numericas] = df[columnas_numericas].round(0)
 
-    # categóricos → "desconocido"
+    # categóricos → desconocido
     for col in df.select_dtypes(include='object').columns:
         df.loc[:, col] = df[col].fillna("desconocido")
 
