@@ -180,7 +180,84 @@ def graficar_pairplot(df, target_col, max_vars=6, save_path=None):
     _guardar(save_path, "pairplot.png")
     plt.close()
 
+# =============================================================================
+# 3.6 ANÁLISIS AVANZADO
+# =============================================================================
 
+def analisis_por_target(df, target_col):
+    # Promedio de variables por nivel del target
+    print("\n" + "=" * 60)
+    print("ANÁLISIS POR TARGET")
+    print("=" * 60)
+
+    resumen = df.groupby(target_col).mean(numeric_only=True)
+
+    print("\nPromedio por nivel:")
+    print(resumen)
+
+    return resumen
+
+
+def correlacion_con_target(df, target_col):
+    # Relación de cada variable con el target
+    print("\n" + "=" * 60)
+    print("CORRELACIÓN CON TARGET")
+    print("=" * 60)
+
+    corr = df.corr(numeric_only=True)[target_col].sort_values(ascending=False)
+
+    print(corr)
+
+    return corr
+
+
+def detectar_outliers_iqr(df):
+    # Conteo de outliers usando IQR
+    print("\n" + "=" * 60)
+    print("OUTLIERS (IQR)")
+    print("=" * 60)
+
+    num_cols = df.select_dtypes(include=np.number).columns
+
+    for col in num_cols:
+        q1 = df[col].quantile(0.25)
+        q3 = df[col].quantile(0.75)
+        iqr = q3 - q1
+
+        lower = q1 - 1.5 * iqr
+        upper = q3 + 1.5 * iqr
+
+        outliers = df[(df[col] < lower) | (df[col] > upper)]
+
+        print(f"{col}: {len(outliers)} outliers")
+
+
+def boxplots_por_target(df, target_col, save_path):
+    # Boxplots separados por target
+    num_cols = df.select_dtypes(include=np.number).columns
+
+    for col in num_cols:
+        if col != target_col:
+            plt.figure()
+            sns.boxplot(x=df[target_col], y=df[col])
+
+            _guardar(save_path, f"boxplot_{col}_vs_{target_col}.png")
+            plt.close()
+
+
+def histogramas_por_target(df, target_col, save_path):
+    # Histogramas separados por target
+    num_cols = df.select_dtypes(include=np.number).columns
+
+    for col in num_cols:
+        if col != target_col:
+            plt.figure()
+            sns.histplot(data=df, x=col, hue=target_col, kde=True)
+
+            _guardar(save_path, f"hist_{col}_vs_{target_col}.png")
+            plt.close()
+            
+            
 # =============================================================================
 # PIPELINE EDA
 # =============================================================================
@@ -192,12 +269,18 @@ def ejecutar_eda(df, target_col):         # Ejecuta todo el flujo de análisis e
     tendencia_central(df)
     dispersion(df)
     stats = estadisticas_descriptivas(df)
+    # Análisis adicional
+    analisis_por_target(df, target_col)
+    correlacion_con_target(df, target_col)
+    detectar_outliers_iqr(df)
 
     print("\nGenerando visualizaciones...")
 
     graficar_boxplots(df, save_path)
     graficar_histogramas(df, save_path=save_path)
     graficar_correlacion(df, save_path)
+    boxplots_por_target(df, target_col, save_path)
+    histogramas_por_target(df, target_col, save_path)
 
     num_cols = df.select_dtypes(include=np.number).columns
     if len(num_cols) >= 2:
