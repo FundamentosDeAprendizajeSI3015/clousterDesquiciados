@@ -5,6 +5,7 @@ from EDA.EDA import ejecutar_eda
 from no_supervisado.no_supervisado import ejecutar_no_supervisado
 from indexesScore.Score import calcular_todas_metricas, imprimir_reporte
 from indexesScore.score_nosuperviced.graficas import generar_todas_graficas
+from SVM.SVM import ejecutar_svm
 import os
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -91,6 +92,15 @@ def main():
             "visualizaciones", "no_supervisado_metricas"
         )
         generar_todas_graficas(resultados_metricas, save_path=ruta_score)
+
+    # -----------------------------------------------------------------------------
+    # 12. MODELO SUPERVISADO — SVM
+    # -----------------------------------------------------------------------------
+
+    resultados_svm = ejecutar_svm(
+        df,
+        base_dir=os.path.dirname(__file__)
+    )
 
 
 if __name__ == "__main__":
