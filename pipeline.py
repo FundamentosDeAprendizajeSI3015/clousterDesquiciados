@@ -6,6 +6,7 @@ from no_supervisado.no_supervisado import ejecutar_no_supervisado
 from indexesScore.Score import calcular_todas_metricas, imprimir_reporte
 from indexesScore.score_nosuperviced.graficas import generar_todas_graficas
 from SVM.SVM import ejecutar_svm
+from supervised.supervised import ejecutar_supervisado
 import os
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -14,12 +15,9 @@ from sklearn.preprocessing import StandardScaler
 FEATURES = ["exp", "rutina", "estructuracion", "creatividad", "resolucion", "interaccion"]
 
 
-def preparar_carpeta_visualizaciones(base_dir):
-    """
-    Crea la carpeta visualizaciones/no_supervisado si no existe y
-    retorna su ruta absoluta para que los gráficos se guarden ahí.
-    """
-    ruta = os.path.join(base_dir, "visualizaciones", "no_supervisado")
+def preparar_carpeta_visualizaciones(base_dir, subcarpeta):
+    """Crea la subcarpeta dentro de visualizaciones/ y retorna su ruta."""
+    ruta = os.path.join(base_dir, "visualizaciones", subcarpeta)
     os.makedirs(ruta, exist_ok=True)
     print(f"\n  Carpeta de visualizaciones lista: {ruta}")
     return ruta
@@ -56,7 +54,7 @@ def main():
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
-    ruta_vis_ns = preparar_carpeta_visualizaciones(os.path.dirname(__file__))
+    ruta_vis_ns = preparar_carpeta_visualizaciones(os.path.dirname(__file__), "no_supervisado")
 
     resultados_ns = ejecutar_no_supervisado(
         X_scaled,
@@ -97,9 +95,23 @@ def main():
     # 12. MODELO SUPERVISADO — SVM
     # -----------------------------------------------------------------------------
 
-    resultados_svm = ejecutar_svm(
+    ejecutar_svm(
         df,
         base_dir=os.path.dirname(__file__)
+    )
+
+    # -----------------------------------------------------------------------------
+    # 13. MODELOS SUPERVISADOS — Regresión Logística, Árbol, Random Forest
+    # -----------------------------------------------------------------------------
+
+    ruta_vis_sup = preparar_carpeta_visualizaciones(os.path.dirname(__file__), "supervisado")
+
+    ejecutar_supervisado(
+        df,
+        target_col="automatizacion_cat",
+        task="classification",
+        features=FEATURES,
+        save_path=ruta_vis_sup,
     )
 
 
