@@ -19,10 +19,61 @@ Cada rama tiene su propio archivo de documentación (p. ej. `readme_eda.md`, `re
 > Las gráficas generadas por cada módulo deben guardarse en [visualizacion/graficas/](visualizacion/graficas/).
 > Los scores y métricas deben guardarse en [index_score/](index_score/).
 
-### Carpeta adicional
+### Carpetas adicionales
 | Carpeta | Descripción |
 |---|---|
 | [data/](data/) | Datasets de entrada y salida (no se sube al repositorio) |
+| [mkl/](mkl/) | Módulo de Multiple Kernel Learning con Extremality Ordering |
+
+---
+## Módulo MKL — Multiple Kernel Learning
+
+El módulo [`mkl/`](mkl/) implementa el algoritmo **Extremality Multiple Kernel Learning (EMKL)**, basado en el repositorio [extremality_mkl](https://github.com/maospina1041/extremality_mkl), y adaptado al dataset del proyecto.
+
+### ¿Qué hace?
+
+1. Genera múltiples **kernels polinomiales débiles** con subconjuntos aleatorios de features.
+2. Calcula métricas de calidad para cada kernel: **Alignment**, **Polarization**, **FSM** y **Complex Ratio**.
+3. Asigna pesos a los kernels usando **Extremality Ordering** (ordenamiento geométrico en espacio de métricas).
+4. Compara cuatro estrategias de combinación: **Natural**, **Anti-Natural**, **RBF** y **Polinomial**.
+5. Genera gráficas de evolución de métricas guardadas en `visualizaciones/mkl/`.
+
+### Estructura del módulo
+
+| Archivo | Descripción |
+|---|---|
+| `extremality_order.py` | Gram-Schmidt + rotación de matrices + orden de extremalidad |
+| `kernel_metrics.py` | Métricas de calidad de kernels (Alignment, Polarization, FSM, Complex Ratio) |
+| `weak_polynomial_kernel.py` | Generación de kernels polinomiales débiles con selección aleatoria de features |
+| `weight_linear_combination.py` | Normalización y potenciación de pesos |
+| `extremality_weights.py` | Cálculo de pesos `w_1` (Natural) y `w_2` (Anti-Natural) |
+| `mkl_simulation.py` | Simulación con splits aleatorios y evaluación de los 4 métodos |
+| `mkl_plots.py` | Gráficas de métricas vs. número de kernels + heatmap de resultados |
+| `mkl_pipeline.py` | Función `ejecutar_mkl()` que orquesta todo e integra con `pipeline.py` |
+
+### Paso en el pipeline
+
+Es el **paso 14**, se ejecuta tras los modelos supervisados:
+
+```python
+ejecutar_mkl(
+    df,
+    features=FEATURES,
+    target_col="automatizacion_cat",
+    save_path="visualizaciones/mkl/",
+    n_iter=10,
+    kernels_list=[5, 10, 20],
+    t=4,
+)
+```
+
+| Parámetro | Valor por defecto | Descripción |
+|---|---|---|
+| `n_iter` | `10` | Iteraciones de train/test split por configuración |
+| `kernels_list` | `[5, 10, 20]` | Número de kernels débiles a evaluar |
+| `t` | `4` | Máximo de features por kernel (≤ 6 features del dataset) |
+
+Las gráficas se guardan automáticamente en `visualizaciones/mkl/`.
 
 ---
 ## Integrantes y responsabilidades

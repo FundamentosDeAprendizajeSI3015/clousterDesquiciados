@@ -7,6 +7,7 @@ from indexesScore.Score import calcular_todas_metricas, imprimir_reporte
 from indexesScore.score_nosuperviced.graficas import generar_todas_graficas
 from SVM.SVM import ejecutar_svm
 from supervised.supervised import ejecutar_supervisado
+from mkl.mkl_pipeline import ejecutar_mkl
 import os
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -112,6 +113,22 @@ def main():
         task="classification",
         features=FEATURES,
         save_path=ruta_vis_sup,
+    )
+
+    # -------------------------------------------------------------------------
+    # 14. MKL — Multiple Kernel Learning con Extremality Ordering
+    # -------------------------------------------------------------------------
+
+    ruta_vis_mkl = preparar_carpeta_visualizaciones(os.path.dirname(__file__), "mkl")
+
+    ejecutar_mkl(
+        df,
+        features=FEATURES,
+        target_col="automatizacion_cat",
+        save_path=ruta_vis_mkl,
+        n_iter=10,
+        kernels_list=[5, 10, 20],
+        t=4,
     )
 
 
