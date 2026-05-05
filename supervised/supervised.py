@@ -156,10 +156,10 @@ def cargar_y_preprocesar(df_or_path, target_col, features=None):
 
     X = X.fillna(X.median(numeric_only=True))
 
-    if y.dtype == object or str(y.dtype) == "category":
-        y = LabelEncoder().fit_transform(y.astype(str))
-    else:
+    if pd.api.types.is_numeric_dtype(y):
         y = y.fillna(y.median()).values
+    else:
+        y = LabelEncoder().fit_transform(y.astype(str))
 
     feature_names = list(X.columns)
     X = X.values
