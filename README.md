@@ -1,6 +1,7 @@
 # Proyecto Desquisiados
 ## Estructura de trabajo
-El proyecto está organizado por **ramas de Git**, donde cada rama corresponde a una etapa del pipeline de Machine Learning. Cada rama tiene su propia carpeta con el código de esa etapa.
+---
+### El proyecto está organizado por **ramas de Git**, donde cada rama corresponde a una etapa del pipeline de Machine Learning. Cada rama tiene su propia carpeta con el código de esa etapa.
 ---
 ## Ramas y carpetas
 Cada rama tiene su propio archivo de documentación (p. ej. `readme_eda.md`, `readme_supervisado.md`) dentro de su carpeta.
