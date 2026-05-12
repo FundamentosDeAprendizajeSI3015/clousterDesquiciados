@@ -9,7 +9,7 @@ def cargar_datos():
     ruta = os.path.join(
         os.path.dirname(__file__),
         "..",
-        "dataset_reemplazabilidad_ia.csv"
+        "dataset_reemplazabilidad_sintetico.csv"
     )
 
     # cargar el dataset desde el archivo csv
