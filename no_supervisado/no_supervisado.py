@@ -7,6 +7,8 @@ import os
 import warnings
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')   # debe ir antes de pyplot para evitar conflicto de hilos con UMAP
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
