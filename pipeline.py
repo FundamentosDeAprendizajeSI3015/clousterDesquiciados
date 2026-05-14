@@ -1,4 +1,7 @@
 
+import matplotlib
+matplotlib.use('Agg')   # backend sin GUI: evita conflicto de hilos con UMAP/numba en Windows
+
 from loadData.loadData import cargar_datos
 from loadData.Limpieza import limpiar_datos
 from EDA.EDA import ejecutar_eda
