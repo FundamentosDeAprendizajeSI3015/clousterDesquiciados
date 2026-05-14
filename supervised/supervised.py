@@ -5,7 +5,7 @@
 
 import os
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 import matplotlib.pyplot as plt
@@ -53,6 +53,9 @@ class Dataset:
     feature_names: list
     X_full:       np.ndarray
     y_full:       np.ndarray
+    X_val:        np.ndarray = field(default=None)
+    X_val_sc:     np.ndarray = field(default=None)
+    y_val:        np.ndarray = field(default=None)
 
 
 # -----------------------------------------------------------------------------
@@ -178,6 +181,66 @@ def cargar_y_preprocesar(df_or_path, target_col, features=None):
         y_train=y_train, y_test=y_test,
         feature_names=feature_names,
         X_full=X, y_full=y,
+    )
+
+
+# -----------------------------------------------------------------------------
+# 1b. Carga desde splits pre-divididos (modo distribuido)
+# -----------------------------------------------------------------------------
+
+def cargar_presplit(train_df, val_df, test_df, target_col, features=None):
+    """
+    Crea un Dataset desde DataFrames ya divididos externamente.
+    El scaler y LabelEncoder se ajustan SOLO en train para evitar data leakage.
+    """
+    print("\n" + "="*60)
+    print("MODELOS SUPERVISADOS — MODO DISTRIBUIDO")
+    print("="*60)
+    print(f"\n  Train : {len(train_df):,} filas")
+    print(f"  Val   : {len(val_df):,} filas")
+    print(f"  Test  : {len(test_df):,} filas")
+    print(f"  Variable objetivo: '{target_col}'")
+
+    feature_names = features if features is not None else [
+        c for c in train_df.columns if c != target_col
+    ]
+
+    def _get_X(df):
+        X = df[feature_names].copy()
+        X = X.fillna(X.median(numeric_only=True))
+        return X.values
+
+    X_train_raw = _get_X(train_df)
+    X_val_raw   = _get_X(val_df)
+    X_test_raw  = _get_X(test_df)
+
+    # Codificación del target — fit solo en train
+    y_col = train_df[target_col]
+    if pd.api.types.is_numeric_dtype(y_col):
+        y_train = train_df[target_col].fillna(train_df[target_col].median()).values
+        y_val   = val_df[target_col].fillna(val_df[target_col].median()).values
+        y_test  = test_df[target_col].fillna(test_df[target_col].median()).values
+    else:
+        le = LabelEncoder()
+        y_train = le.fit_transform(train_df[target_col].astype(str))
+        y_val   = le.transform(val_df[target_col].astype(str))
+        y_test  = le.transform(test_df[target_col].astype(str))
+
+    scaler     = StandardScaler()
+    X_train_sc = scaler.fit_transform(X_train_raw)
+    X_val_sc   = scaler.transform(X_val_raw)
+    X_test_sc  = scaler.transform(X_test_raw)
+
+    X_full = np.vstack([X_train_raw, X_val_raw, X_test_raw])
+    y_full = np.concatenate([y_train, y_val, y_test])
+
+    return Dataset(
+        X_train=X_train_raw,  X_test=X_test_raw,
+        X_train_sc=X_train_sc, X_test_sc=X_test_sc,
+        y_train=y_train,      y_test=y_test,
+        feature_names=feature_names,
+        X_full=X_full,        y_full=y_full,
+        X_val=X_val_raw,      X_val_sc=X_val_sc,  y_val=y_val,
     )
 
 
@@ -394,18 +457,21 @@ def graficar_comparacion(results, task, save_path=None):
 # -----------------------------------------------------------------------------
 
 def ejecutar_supervisado(df_or_path, target_col, task,
-                          features=None, save_path=None):
+                          features=None, save_path=None,
+                          val_df=None, test_df=None):
     """
-    Pipeline completo de modelos supervisados:
-    1. Carga y preprocesamiento
-    2. Regresión Lineal (si task='regression') o Logística (si 'classification')
-    3. Árbol de Decisión
-    4. Random Forest
-    5. Comparación final
+    Pipeline completo de modelos supervisados.
+
+    Modos:
+      - Normal  : pasa solo df_or_path; hace split 80/20 internamente.
+      - Distribuido: pasa df_or_path (train), val_df y test_df ya separados.
 
     Retorna dict con métricas de cada modelo.
     """
-    ds = cargar_y_preprocesar(df_or_path, target_col, features)
+    if val_df is not None and test_df is not None:
+        ds = cargar_presplit(df_or_path, val_df, test_df, target_col, features)
+    else:
+        ds = cargar_y_preprocesar(df_or_path, target_col, features)
 
     results = {}
 
